@@ -46,8 +46,12 @@ src/
 ```
 
 ## Como Executar
-Clone este repositório:
+- Clone este repositório:
+```plaintext
 git clone https://github.com/seu-usuario/medicamentopoo.git
+```
+```plaintext
 cd sistema-funcionarios-javafx
-Abra com sua IDE (IntelliJ no meu caso)
-Execute a classe HelloAplication.java
+```
+- Abra com sua IDE (IntelliJ no meu caso)
+- Execute a classe HelloAplication.java
