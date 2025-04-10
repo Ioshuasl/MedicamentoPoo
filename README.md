@@ -21,7 +21,7 @@ Este é um projeto desenvolvido para a disciplina de **Programação Orientada a
 
 ---
 
-## 🗂Estrutura do Projeto
+## Estrutura do Projeto
 
 ```plaintext
 src/
