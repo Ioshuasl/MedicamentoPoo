@@ -14,7 +14,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class MedicamentoRepository {
-    private final String caminhoCSV = "funcionarios.csv";
+    private final String caminhoCSV = "medicamentos.csv";
     private List<MedicamentoModel> medicamentos = new ArrayList<>();
     private FornecedorRepository fornecedorRepository; // Instância do repositório de fornecedores
 
@@ -48,9 +48,24 @@ public class MedicamentoRepository {
                 .collect(Collectors.toList());
     }
 
+    public List<MedicamentoModel> filtrarPorVencimentoProximo() {
+        LocalDate hoje = LocalDate.now();
+        LocalDate dataLimite = hoje.plusDays(30);
+
+        return medicamentos.stream()
+                .filter(m -> m.getDataValidade().isBefore(dataLimite) && m.getDataValidade().isAfter(hoje)) // Filtra medicamentos com data de validade entre hoje e 30 dias
+                .collect(Collectors.toList());
+    }
+
     public List<MedicamentoModel> listarTodos() {
         carregarCSV();
         return Collections.unmodifiableList(medicamentos);
+    }
+
+    public List<MedicamentoModel> filtrarPorEstoqueBaixo() {
+        return medicamentos.stream()
+                .filter(m -> m.getQuantidadeEstoque() < 5)
+                .collect(Collectors.toList());
     }
 
     private void carregarCSV() {
@@ -63,8 +78,6 @@ public class MedicamentoRepository {
             while ((linha = reader.readLine()) != null) {
                 String[] campos = linha.split(";");
 
-                FornecedorModel fornecedor = fornecedorRepository.buscarPorCnpj(campos[8]);
-
                 MedicamentoModel medicamento = new MedicamentoModel(
                         campos[0], // codigo
                         campos[1], // nome
@@ -74,7 +87,7 @@ public class MedicamentoRepository {
                         Integer.parseInt(campos[5]), // quantidadeEstoque
                         new BigDecimal(campos[6]), // preco
                         Boolean.parseBoolean(campos[7]), // controlado
-                        fornecedor // fornecedor
+                        campos[8] // fornecedor
                 );
                 medicamentos.add(medicamento);
             }

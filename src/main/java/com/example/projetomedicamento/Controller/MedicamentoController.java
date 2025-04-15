@@ -5,8 +5,11 @@ import com.example.projetomedicamento.Model.MedicamentoModel;
 import com.example.projetomedicamento.Repository.FornecedorRepository;
 import com.example.projetomedicamento.Repository.MedicamentoRepository;
 import javafx.event.ActionEvent;
+import javafx.scene.control.ComboBox;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Alert.AlertType;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -16,6 +19,9 @@ public class MedicamentoController {
 
     @FXML
     private CheckBox booleanControlado;
+
+    @FXML
+    private ComboBox<String> comboBoxMedicamento;
 
     @FXML
     private ListView<FornecedorModel> listFornecedores;
@@ -34,6 +40,9 @@ public class MedicamentoController {
 
     @FXML
     private DatePicker txtDataValidade;
+
+    @FXML
+    private TextField txtQuantidade;
 
     @FXML
     private TextField txtDescMedicamento;
@@ -69,11 +78,11 @@ public class MedicamentoController {
     private void initialize(){
         atualizarListaFornecedores();
         atualizarListaMedicamentos();
+        comboBoxMedicamento.getItems().addAll("Todos", "Controlados", "Não Controlados");
     }
 
     @FXML
     void cadastrarFornecedor(ActionEvent event) {
-        // Coletar dados do fornecedor
         String razaoSocial = txtRazaoSocial.getText();
         String cnpj = txtCnpjFornecedor.getText();
         String telefone = txtTelefoneFornecedor.getText();
@@ -81,36 +90,86 @@ public class MedicamentoController {
         String cidade = txtCidadeFornecedor.getText();
         String estado = txtEstadoFornecedor.getText();
 
-        // Criar um novo fornecedor
+        if (razaoSocial.isEmpty() || cnpj.isEmpty() || telefone.isEmpty() || email.isEmpty() || cidade.isEmpty() || estado.isEmpty()) {
+            Alert alert = new Alert(AlertType.WARNING, "Todos os campos são obrigatórios!", ButtonType.OK);
+            alert.setTitle("Aviso");
+            alert.setHeaderText(null); // Sem cabeçalho
+            alert.showAndWait();
+            return;
+        }
+
+        if (cnpj.length() != 14) {
+            Alert alert = new Alert(AlertType.WARNING, "CNPJ Inválido. O CNPJ deve ter 14 dígitos.", ButtonType.OK);
+            alert.setTitle("Aviso");
+            alert.setHeaderText(null);
+            alert.showAndWait();
+            return;
+        }
+
         FornecedorModel fornecedor = new FornecedorModel(cnpj, razaoSocial, telefone, email, cidade, estado);
 
-        // Adicionar o fornecedor ao repositório
         fornecedorRepository.adicionarFornecedor(fornecedor);
 
-        // Atualizar a lista de fornecedores
         atualizarListaFornecedores();
 
-        // Limpar campos
         limparCamposFornecedor();
+        System.out.println("Fornecedor cadastrado com sucesso");
     }
 
     @FXML
     void cadastrarMedicamento(ActionEvent event) {
-        // Coletar dados do medicamento
         String codigo = txtCodigoMedicamento.getText();
         String nome = txtNomeMedicamento.getText();
         String descricao = txtDescMedicamento.getText();
         String principioAtivo = txtPrincipioAtivo.getText();
         LocalDate dataValidade = txtDataValidade.getValue();
-        int quantidadeEstoque = 0; // Defina um valor padrão ou adicione um campo para entrada
+        String quantidadeEstoque = txtQuantidade.getText().trim();
         BigDecimal preco = new BigDecimal(txtPreco.getText());
         boolean controlado = booleanControlado.isSelected();
+        String fornecedor = txtbuscaCnpjFornecedor.getText();
 
-        // Obter o fornecedor selecionado (se necessário)
-        FornecedorModel fornecedor = fornecedorRepository.buscarPorCnpj(txtbuscaCnpjFornecedor.getText());
+        if (codigo.isEmpty() || nome.isEmpty() || descricao.isEmpty() || principioAtivo.isEmpty() || dataValidade == null || preco.toString().isEmpty() || quantidadeEstoque.toString().isEmpty() || fornecedor.isEmpty()) {
+            Alert alert = new Alert(AlertType.WARNING, "Todos os campos são obrigatórios!", ButtonType.OK);
+            alert.setTitle("Aviso");
+            alert.setHeaderText(null);
+            alert.showAndWait();
+            return;
+        }
+
+        if (!codigo.matches("^[a-zA-Z0-9]{7}$")) {
+            Alert alert = new Alert(AlertType.WARNING, "O código deve ter exatamente 7 caracteres alfanuméricos.", ButtonType.OK);
+            alert.setTitle("Aviso");
+            alert.setHeaderText(null);
+            alert.showAndWait();
+            return;
+        }
+
+        int quantidade = Integer.parseInt(quantidadeEstoque);
+
+        try {
+            preco = new BigDecimal(preco.toString().trim());
+        } catch (NumberFormatException e) {
+            Alert alert = new Alert(AlertType.WARNING, "Preço inválido. Por favor, insira um valor numérico.", ButtonType.OK);
+            alert.setTitle("Aviso");
+            alert.setHeaderText(null);
+            alert.showAndWait();
+            return;
+        }
+
+        FornecedorModel verificarfornecedor = fornecedorRepository.buscarPorCnpj(fornecedor);
+
+        if (verificarfornecedor == null){
+            Alert alert = new Alert(AlertType.WARNING, "Fornecedor não encontrado", ButtonType.OK);
+            alert.setTitle("Aviso");
+            alert.setHeaderText(null);
+            alert.showAndWait();
+            return;
+        } else {
+            System.out.println(verificarfornecedor.getRazaoSocial());
+        }
 
         // Criar um novo medicamento
-        MedicamentoModel medicamento = new MedicamentoModel(codigo, nome, descricao, principioAtivo, dataValidade, quantidadeEstoque, preco, controlado, fornecedor);
+        MedicamentoModel medicamento = new MedicamentoModel(codigo, nome, descricao, principioAtivo, dataValidade, quantidade, preco, controlado, fornecedor);
 
         // Adicionar o medicamento ao repositório
         medicamentoRepository.adicionarMedicamento(medicamento);
@@ -120,6 +179,7 @@ public class MedicamentoController {
 
         // Limpar campos
         limparCamposMedicamento();
+        System.out.println("Medicamento cadastrado com sucesso");
     }
 
     @FXML
@@ -133,15 +193,22 @@ public class MedicamentoController {
     }
 
     @FXML
+    public void filtrarEstoqueBaixo(ActionEvent event) {
+        List<MedicamentoModel> medicamentosFiltrados;
+        medicamentosFiltrados= medicamentoRepository.filtrarPorEstoqueBaixo();
+
+        listMedicamentos.getItems().clear();
+        listMedicamentos.getItems().addAll(medicamentosFiltrados);
+        System.out.println("Filtrando medicamentos que estão com estoque abaixo a 5");
+    }
+
+    @FXML
     void excluirFornecedor(ActionEvent event) {
-        // Obter o fornecedor selecionado na ListView
         FornecedorModel fornecedorSelecionado = listFornecedores.getSelectionModel().getSelectedItem();
 
         if (fornecedorSelecionado != null) {
-            // Remover o fornecedor do repositório
             fornecedorRepository.removerFornecedor(fornecedorSelecionado.getCnpj());
-
-            // Atualizar a lista de fornecedores
+            System.out.println("Fornecedor excluído com sucesso");
             atualizarListaFornecedores();
         } else {
             // Exibir uma mensagem de erro ou aviso se nenhum fornecedor estiver selecionado
@@ -155,17 +222,13 @@ public class MedicamentoController {
 
     @FXML
     void excluirMedicamento(ActionEvent event) {
-        // Obter o medicamento selecionado na ListView
         MedicamentoModel medicamentoSelecionado = listMedicamentos.getSelectionModel().getSelectedItem();
 
         if (medicamentoSelecionado != null) {
-            // Remover o medicamento do repositório
             medicamentoRepository.removerMedicamento(medicamentoSelecionado.getCodigo());
-
-            // Atualizar a lista de medicamentos
+            System.out.println("Medicamento excluído com sucesso");
             atualizarListaMedicamentos();
         } else {
-            // Exibir uma mensagem de erro ou aviso se nenhum medicamento estiver selecionado
             Alert alert = new Alert(Alert.AlertType.WARNING);
             alert.setTitle("Atenção");
             alert.setHeaderText(null);
@@ -176,7 +239,39 @@ public class MedicamentoController {
 
     @FXML
     void comboBoxMedicamentoListado(ActionEvent event) {
-        // Implementar lógica se necessário para lidar com a seleção de medicamentos
+        String filtroSelecionado = comboBoxMedicamento.getValue();
+        List<MedicamentoModel> medicamentosFiltrados;
+
+        // Filtrar medicamentos com base na seleção
+        switch (filtroSelecionado) {
+            case "Controlados":
+                medicamentosFiltrados = medicamentoRepository.filtrarPorControlado(true);
+                System.out.println("Filtrando todos os medicamentos controlados");
+                break;
+            case "Não Controlados":
+                medicamentosFiltrados = medicamentoRepository.filtrarPorControlado(false);
+                System.out.println("Filtrando todos os medicamentos não controlados");
+                break;
+            case "Todos":
+            default:
+                medicamentosFiltrados = medicamentoRepository.listarTodos();
+                System.out.println("Todos os medicamentos");
+                break;
+        }
+
+        // Atualiza a ListView com os medicamentos filtrados
+        listMedicamentos.getItems().clear();
+        listMedicamentos.getItems().addAll(medicamentosFiltrados);
+    }
+
+    @FXML
+    void filtrarVencimento(ActionEvent event) {
+            List<MedicamentoModel> medicamentosFiltrados;
+            medicamentosFiltrados= medicamentoRepository.filtrarPorVencimentoProximo();
+
+            listMedicamentos.getItems().clear();
+            listMedicamentos.getItems().addAll(medicamentosFiltrados);
+            System.out.println("Filtrando medicamentos que estão com vencimento próximo a 30 dias");
     }
 
     private void atualizarListaFornecedores() {
@@ -206,6 +301,7 @@ public class MedicamentoController {
         txtDescMedicamento.clear();
         txtPrincipioAtivo.clear();
         txtPreco.clear();
+        txtQuantidade.clear();
         booleanControlado.setSelected(false);
         txtDataValidade.setValue(null);
         txtbuscaCnpjFornecedor.clear(); // Limpar o campo de busca de CNPJ

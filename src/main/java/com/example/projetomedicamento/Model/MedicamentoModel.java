@@ -3,7 +3,6 @@ package com.example.projetomedicamento.Model;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Objects;
-import com.example.projetomedicamento.Model.FornecedorModel;
 
 public class MedicamentoModel {
     private String codigo; // Identificador único do medicamento
@@ -11,21 +10,21 @@ public class MedicamentoModel {
     private String descricao; // Descrição do medicamento
     private String principioAtivo; // Princípio ativo do medicamento
     private LocalDate dataValidade; // Data de validade do medicamento
-    private int quantidadeEstoque; // Quantidade em estoque
+    private int quantidade; // Quantidade em estoque
     private BigDecimal preco; // Preço do medicamento
     private boolean controlado; // Indica se o medicamento é controlado
-    private FornecedorModel fornecedor; // Fornecedor do medicamento
+    private String fornecedor; // Fornecedor do medicamento
 
     // Construtor
     public MedicamentoModel(String codigo, String nome, String descricao, String principioAtivo,
-                       LocalDate dataValidade, int quantidadeEstoque, BigDecimal preco,
-                       boolean controlado, FornecedorModel fornecedor) {
+                            LocalDate dataValidade, Integer quantidade, BigDecimal preco,
+                            boolean controlado, String fornecedor) {
         this.codigo = codigo;
         this.nome = nome;
         this.descricao = descricao;
         this.principioAtivo = principioAtivo;
         this.dataValidade = dataValidade;
-        this.quantidadeEstoque = quantidadeEstoque;
+        this.quantidade = quantidade;
         this.preco = preco;
         this.controlado = controlado;
         this.fornecedor = fornecedor;
@@ -73,11 +72,11 @@ public class MedicamentoModel {
     }
 
     public int getQuantidadeEstoque() {
-        return quantidadeEstoque;
+        return quantidade;
     }
 
     public void setQuantidadeEstoque(int quantidadeEstoque) {
-        this.quantidadeEstoque = quantidadeEstoque;
+        this.quantidade = quantidadeEstoque;
     }
 
     public BigDecimal getPreco() {
@@ -96,11 +95,11 @@ public class MedicamentoModel {
         this.controlado = controlado;
     }
 
-    public FornecedorModel getFornecedor() {
+    public String getFornecedor() {
         return fornecedor;
     }
 
-    public void setFornecedor(FornecedorModel fornecedor) {
+    public void setFornecedor(String fornecedor) {
         this.fornecedor = fornecedor;
     }
 
@@ -111,7 +110,7 @@ public class MedicamentoModel {
                 ", nome='" + nome + '\'' +
                 ", descricao='" + descricao + '\'' +
                 ", dataValidade=" + dataValidade +
-                ", quantidadeEstoque=" + quantidadeEstoque +
+                ", quantidadeEstoque=" + quantidade +
                 ", preco=" + preco +
                 ", controlado=" + controlado +
                 ", Fornecedor = "+ fornecedor +
@@ -125,7 +124,7 @@ public class MedicamentoModel {
                 descricao,
                 principioAtivo,
                 dataValidade.toString(),
-                String.valueOf(quantidadeEstoque),
+                String.valueOf(quantidade),
                 preco.toString(),
                 String.valueOf(controlado),
                 fornecedor != null ? fornecedor.toString() : ""); // Ajuste conforme necessário
